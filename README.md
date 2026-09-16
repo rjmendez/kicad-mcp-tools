@@ -66,6 +66,34 @@ cd kicad-mcp-tools
 pip install -e .
 ```
 
+## Using as an MCP server
+
+Run the stdio server directly from the published package with `uvx`:
+
+```bash
+uvx --from kicad-mcp-tools mcp-server-kicad-tools
+```
+
+Example MCP client configuration:
+
+```json
+{
+  "mcpServers": {
+    "kicad-tools": {
+      "command": "uvx",
+      "args": ["--from", "kicad-mcp-tools", "mcp-server-kicad-tools"]
+    }
+  }
+}
+```
+
+Exposed tools:
+
+- `parse_kicad_sexpr` — parse KiCad S-expression text into a structured CST-like tree.
+- `roundtrip_kicad_sexpr` — re-serialize parsed KiCad S-expression text and report whether it round-trips exactly.
+- `classify_drc_report` — classify KiCad DRC/ERC JSON as `clean`, `findings`, `malformed`, or `unavailable`.
+- `generate_pin_header_footprint` — generate a KiCad `.kicad_mod` pin-header footprint S-expression.
+
 ## Run tests
 
 ```bash

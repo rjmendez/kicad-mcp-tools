@@ -12,6 +12,13 @@ from kicad_mcp_tools import (
     parse,
     serialize,
 )
+from kicad_mcp_tools.mcp_server import (
+    classify_drc_report,
+    generate_pin_header_footprint as generate_pin_header_footprint_tool,
+    mcp,
+    parse_kicad_sexpr,
+    roundtrip_kicad_sexpr,
+)
 
 class KicadSexprCstTests(unittest.TestCase):
     def test_round_trip_preserves_bytes(self):
@@ -114,6 +121,39 @@ class PinHeaderGeneratorTests(unittest.TestCase):
         footprint = generate_electrode_connector_footprint(4)
         self.assertIn("MycoMIDI_Electrode_1x04_2.54mm", footprint)
         self._assert_balanced_and_parseable(footprint, 4)
+
+
+class McpServerTests(unittest.IsolatedAsyncioTestCase):
+    async def test_tools_are_registered(self):
+        tools = await mcp.list_tools()
+        self.assertTrue(
+            {
+                "parse_kicad_sexpr",
+                "roundtrip_kicad_sexpr",
+                "classify_drc_report",
+                "generate_pin_header_footprint",
+            }.issubset({tool.name for tool in tools})
+        )
+
+    def test_parse_tool_returns_structured_tree(self):
+        result = parse_kicad_sexpr('(footprint "Demo")')
+        self.assertEqual(result["kind"], "doc")
+        self.assertEqual(result["children"][0]["head"], "footprint")
+
+    def test_roundtrip_and_classification_tools_work_directly(self):
+        sample = '(kicad_pcb (version 20250316))'
+        roundtrip = roundtrip_kicad_sexpr(sample)
+        classification = classify_drc_report('{"violations":[],"unconnected_items":[]}')
+
+        self.assertTrue(roundtrip["round_trip_equal"])
+        self.assertEqual(roundtrip["serialized_text"], sample)
+        self.assertEqual(classification["status"], "clean")
+        self.assertEqual(classification["report_kind"], "drc")
+
+    def test_footprint_tool_returns_parseable_footprint(self):
+        footprint = generate_pin_header_footprint_tool(4, 2.54)
+        self.assertIn('footprint "PinHeader_1x04_2.54mm"', footprint)
+        self.assertEqual(parse(footprint.encode("utf-8")).lists[0].head, "footprint")
 
 
 if __name__ == "__main__":

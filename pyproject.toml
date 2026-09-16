@@ -21,7 +21,10 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
 ]
-dependencies = []
+dependencies = ["mcp>=2.0.0,<3.0.0"]
+
+[project.scripts]
+mcp-server-kicad-tools = "kicad_mcp_tools.mcp_server:main"
 
 [tool.setuptools]
 packages = ["kicad_mcp_tools"]
